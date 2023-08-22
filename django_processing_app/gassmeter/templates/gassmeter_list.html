@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Výpis hodnot z databáze</title>
+</head>
+<body>
+
+    <h1>Hodnoty uložené databáze</h1>
+
+    <table border="1px" cellpadding="10px">
+    {% for gassmeter in gassmeter_list %}
+        <tr><td>{{ gassmeter.timestamp }}</td><td>{{ gassmeter.value }}</td><td>{{ gassmeter.text }}</td></tr>
+    {% endfor %}
+    </table>
+
+
+</body>
+</html>
