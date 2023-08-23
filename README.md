@@ -8,8 +8,6 @@ shows the results in form of interactive plots on online webpage.
 
 For each subsystem there is a separate README.md file, that describes how to setup and run it.
 
-Final project overview is available on webpage: https://plynomer.zahornad.cz/ 
-
 
 
 
