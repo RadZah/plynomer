@@ -46,7 +46,8 @@ def fetch_images_from_laravel(image_path, image_name, order_id):
 
 def fetch_list_of_images():
 
-    url = "https://zahornad.cz/api/images"
+    # url = "https://domain.tld/api/images"
+    url = ""
     response = requests.get(url)
     response_data = response.json()  # Assuming the response is in JSON format
 

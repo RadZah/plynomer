@@ -1,0 +1,31 @@
+# Laravel REST API which serves images
+
+Serves as image data storage
+
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Features
+
+- Accepts images
+- Offers and serves images
+
+## Installation
+
+- Basic Laravel application installation
+- create API interface
+- implement image handling functionality
+
+
+
+## Contributing
+
+Contributions are welcome!
+
+## License
+
+This project is licensed under the MIT License.
