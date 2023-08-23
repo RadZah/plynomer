@@ -29,15 +29,14 @@ urlpatterns = [
     # plot generators
     path('plot_view/', views.plot_view, name='plot_view'),
     path('other_view_plotly/', views.other_view_plotly, name='other_view_plotly'),
-    path('plot_view_plotly/', views.plot_view_plotly, name='plot_view_plotly'),
 
     # last read image link
     path('last_read_image/', views.last_read_image, name='last_read_image'),
     path('just_string/', views.just_string, name='just_string'),
 
-
     path('', include('gassmeter.urls')),
     path('admin/', admin.site.urls),
+
 
 ]
 

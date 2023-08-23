@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 
 import hashlib
 import os
@@ -7,7 +7,13 @@ from urllib.parse import unquote
 
 from ImageRead import ImageRead
 
+import sys
+
 from gassmeter.models import Gassmeter
+
+
+# print(" --- " , sys.path , " --- " )
+# exit()
 
 
 def generate_image_hash(image_path):
@@ -17,12 +23,14 @@ def generate_image_hash(image_path):
 
 
 def process_image():
+
     # Get the directory of the script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     # Construct the path to the "media" directory
     media_dir = os.path.join(script_dir, "..", "media")
     # Construct the path to the "processing_images" directory within "media"
     processing_images_dir = os.path.join(media_dir, "input_images")
+
 
     # print on new lien
     print("Script Directory:", script_dir)
@@ -42,15 +50,20 @@ def process_image():
     # Sort filenames by the extracted datetime
     sorted_filenames = sorted(os.listdir(processing_images_dir), key=extract_datetime_from_filename)
 
+    # for filename in sorted_filenames:
+    #     print(filename)
+
     print("now processing images")
 
     # Only take the last 50 entries
-    sorted_filenames = sorted_filenames[-50:]
+    # sorted_filenames = sorted_filenames[860:]
 
     # Process each image
+    # for filename in os.listdir(processing_images_dir):
     for filename in sorted_filenames:
 
         src_file_path = os.path.join(processing_images_dir, filename)
+        # print("src_file_path", src_file_path, "\n<br>")
 
         # Check if the hash exists in the database
         image_hash = generate_image_hash(src_file_path)
@@ -61,22 +74,38 @@ def process_image():
 
             imgRead = ImageRead(src_file_path, filename)
             timestamp_value = imgRead.extract_timestamp_from_filename()
+            # print(timestamp_value)
             imgRead.read()
             imgRead.resize()
             imgRead.crop()
+            # imgRead.show_image()
+            # text = imgRead.extract_text()
             text = imgRead.read_the_best_value()
+            # print("text", text, "\n<br>")
             if text != "0":
+                # print("finished")
+                # continue
+                print("text", text)
                 image_hash = generate_image_hash(src_file_path)
                 imgRead.save_to_db(image_hash)
                 imgRead.save_image()
+
             else:
-                pass
+                print("text XXXXXXXXXXXX ", text, " - ", imgRead.timestamp)
+
+
+            # copy ORIG image into BACKUP
+            # imgRead.copy_to_backup()
 
         else:
             # Already in database
             print(f"Image {src_file_path} already processed and saved.")
 
+
+
+
     print('process_image dinished successfully!')
+
 
 
 if __name__ == "__main__":

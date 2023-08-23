@@ -121,20 +121,25 @@ class ImageRead:
             print("1 or 7 first_lang_value_str", first_lang_value_str)
             second_lang_value = self.extract_text(lang='ces')
             second_lang_value_str = str(second_lang_value)
-            print("second value", second_lang_value)
+            if second_lang_value_str == "0":
+                print("second_lang_value_str", second_lang_value_str)
+                print("nebudem zpracovávat")
+                best_value = list(second_lang_value_str)
+            else:
+                print("second value", second_lang_value)
 
-            for i, (c, e) in enumerate(zip(first_lang_value_str, second_lang_value_str)):
-                if c == "1" or c == "7":
-                    if e == "1" or e == "4":
-                        best_value[i] = "1"
-                        print("R first_lang_value_str", first_lang_value_str)
-                        print("R best_value", best_value)
-                    elif e == "7":
-                        best_value[i] = "7"
-                        print("S first_lang_value_str", first_lang_value_str)
-                        print("S best_value", best_value)
-                    else:
-                        print("T english recognised ", e)
+                for i, (c, e) in enumerate(zip(first_lang_value_str, second_lang_value_str)):
+                    if c == "1" or c == "7":
+                        if e == "1" or e == "4":
+                            best_value[i] = "1"
+                            print("R first_lang_value_str", first_lang_value_str)
+                            print("R best_value", best_value)
+                        elif e == "7":
+                            best_value[i] = "7"
+                            print("S first_lang_value_str", first_lang_value_str)
+                            print("S best_value", best_value)
+                        else:
+                            print("T english recognised ", e)
 
         best_value = "".join(best_value)
 

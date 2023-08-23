@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#!/srv/venv/bin/python3
 
 from decouple import config
 
@@ -12,12 +12,18 @@ from django.core.files.temp import NamedTemporaryFile
 
 
 BASE_URL = config('BASE_URL')
+# BASE_SAVE = os.path.join('..', 'media', 'input_images')
 BASE_SAVE_PATH = config('BASE_SAVE_PATH')
+# BASE_SAVE = os.path.join('..' + '\media' + '\input_images\\')
 
+# script_dir = os.path.dirname(os.path.abspath(__file__))
 
 def fetch_images_from_laravel(image_path, image_name, order_id):
 
+    print("ordered: ", order_id)
+
     full_url = BASE_URL + image_path + image_name
+    # save_path = os.path.join(BASE_SAVE, (str(order_id) + ".jpg"))
     save_path = os.path.join(BASE_SAVE_PATH, image_name)
 
     # Download the image

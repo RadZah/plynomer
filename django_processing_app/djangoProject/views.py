@@ -10,6 +10,7 @@ from decouple import config
 from datetime import datetime
 
 import numpy as np
+from scipy.stats import linregress
 from matplotlib import pyplot as plt
 import plotly.graph_objects as go
 
@@ -64,50 +65,10 @@ def last_read_image():
     # get just first value
     last_image = sorted_filenames[-1]
 
-    path_to_last_image = os.path.join(processing_images_dir, last_image)
-
-    # try:
-    #     img_file = open(path_to_last_image, 'rb')
-    #     response = FileResponse(img_file, content_type='image/jpg')
-    #     response['Content-Disposition'] = f'inline; filename={last_image}'
-    # except FileNotFoundError:
-    #     response = HttpResponseNotFound("Image not found" + path_to_last_image)
-    #
-    # return response
-
     # Assuming your static/media URL setting is set correctly
     relative_image_url = os.path.join(config("RELATIVE_PROCESSING_IMAGES_PATH"), last_image)
 
     return relative_image_url
-    # return render(request, 'layout.html', {'last_read_image': relative_image_url})
-
-
-def YYYlast_read_image(request):
-    processing_images_dir = config('PROCESSING_IMAGES_PATH')
-
-    # Fetch the latest record from Gassmeter model
-    latest_record = Gassmeter.objects.latest('timestamp')
-
-    # If there's no record found, handle the case (return a not found response or some other handling)
-    # if not latest_record:
-    #     return HttpResponseNotFound("No latest record found")
-
-    # latest_image_filename = f"image_{latest_record.timestamp.isoformat().replace(':', '%3A')}.jpg"
-    latest_image_filename = f"image_{latest_record.timestamp.isoformat()}.jpg"
-
-    # Create the full path to the latest image
-    path_to_last_image = os.path.join(processing_images_dir, latest_image_filename)
-
-    # Open the image and send it as a response
-    try:
-        with open(path_to_last_image, 'rb') as img_file:
-            response = FileResponse(img_file, content_type='image/jpg')
-            response['Content-Disposition'] = f'inline; filename={latest_image_filename}'
-    except FileNotFoundError:
-        error_text = " not found " + path_to_last_image
-        response = HttpResponseNotFound("Image not found" + path_to_last_image)
-
-    return response
 
 
 def plot_view(request):
@@ -137,116 +98,58 @@ def plot_view(request):
     return response
 
 
-def Xplot_view(request):
-    """ Plot the data from the database using matplotlib """
-
-    # Extract data
-    data = Gassmeter.objects.values_list('text', 'timestamp')
-    # Convert 'text' to integers and separate the data into two lists
-    texts, timestamps = zip(*[(int(item[0]), item[1]) for item in data])
-
-    # Convert timestamps into a format that can be used for mathematical operations
-    timestamps_numeric = [t.timestamp() for t in timestamps]
-    # Compute distances between consecutive data points
-    distances = [timestamps_numeric[i + 1] - timestamps_numeric[i] for i in range(len(timestamps_numeric) - 1)]
-    # Use mean and standard deviation to color points
-    mean_distance = np.mean(distances)
-    std_distance = np.std(distances)
-
-    colors = []
-    # for d in distances:
-    #     if d < mean_distance - 0.5 * std_distance or d > mean_distance + 0.5 * std_distance:
-    #         colors.append('red')  # outlier
-    #     else:
-    #         colors.append('blue')  # densely packed
-    # colors.append(colors[-1])  # for the last point
-
-    colors.append('blue')  # densely packed
-
-    plt.figure(figsize=(10, 5))
-    plt.scatter(timestamps, texts, c=colors)
-    plt.plot(timestamps, texts, color='gray')  # connecting line
-    plt.ylabel('Spotřeba')
-    plt.xlabel('Čas')
-    plt.title('Spotřeba plynu')
-
-    # Save the plot to a BytesIO object
-    buf = io.BytesIO()
-    plt.savefig(buf, format="png")
-    buf.seek(0)
-
-    # Serve the plot directly as an image
-    response = FileResponse(buf, content_type='image/png')
-    response['Content-Disposition'] = 'inline; filename="plot.png"'
-
-    return response
-
-
-# def plot_view_plotly():
 def other_view_plotly():
     """ Plot the data from the database using plotly """
 
-    # Extract data - just the last 100 records
-    data = Gassmeter.objects.values_list('value', 'timestamp').order_by('timestamp')[:40]
-    # Convert 'text' to integers and separate the data into two lists
-    gas_values, timestamps = zip(*[(float(item[0]), item[1]) for item in data])
-
-    fig = go.Figure(data=go.Scatter(x=timestamps,
-                                    y=gas_values,
-                                    mode='lines+markers'))
-    fig.update_layout(title='Vývoj spotřeby plynu',
-                      xaxis_title='Časové razítko (Central European, Prague)',
-                      yaxis_title='Rozpoznaná hodnota v m3')
-
-    # Convert the plot to HTML
-    plot_html = fig.to_html(full_html=False)
-
-    return plot_html
-
-
-def plot_view_plotly(request):
-    """ Plot the data from the database using plotly """
+    # Simple Moving Average Function
+    def calculate_sma(data, window=5):
+        return np.convolve(data, np.ones(window) / window, mode='valid')
 
     # Extract data
-    data = Gassmeter.objects.values_list('text', 'timestamp').order_by('timestamp')
-    # Convert 'text' to integers and separate the data into two lists
-    texts, timestamps = zip(*[(int(item[0]), item[1]) for item in data])
+    data = Gassmeter.objects.values_list('value', 'timestamp').order_by('-timestamp')
+    gas_values, timestamps = zip(*[(float(item[0]), item[1]) for item in data])
 
-    fig = go.Figure(data=go.Scatter(x=timestamps,
-                                    y=texts,
-                                    mode='lines+markers'))
-    fig.update_layout(title='Vývoj spotřeby plynu',
-                      xaxis_title='Časové razítko (timestamp | Prague)',
-                      yaxis_title='Rozpoznaná hodnota v m3')
+    # Filter out the bottom 5% and top 5% of original values
+    sorted_combined = sorted(list(zip(gas_values, timestamps)), key=lambda x: x[0])
+    lower_index = int(len(gas_values) * 0.15)
+    upper_index = int(len(gas_values) * 0.85)
 
-    # Convert the plot to HTML
-    plot_html = fig.to_html(full_html=False)
+    filtered_combined = sorted_combined[lower_index:upper_index]
 
-    return render(request, 'layout.html', {'plot_html': plot_html})
+    # Reorder the filtered list by timestamps
+    reordered_filtered_combined = sorted(filtered_combined, key=lambda x: x[1])
 
+    # Extract values and timestamps from reordered list
+    filtered_values, filtered_timestamps = zip(*reordered_filtered_combined)
 
-def copy_script(request):
-    """ Copies images from one folder to another """
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    script_path = os.path.join(base_dir, 'scripts', 'copy.py')
+    # Calculate SMAs
+    window_size = 40  # Example window size
+    sma_original = calculate_sma(gas_values, window_size)
+    sma_filtered = calculate_sma(filtered_values, window_size)
 
-    result = subprocess.run(['python', script_path], capture_output=True, text=True)
+    # Original Data Plot
+    fig_original = go.Figure()
+    fig_original.add_trace(go.Scatter(x=timestamps, y=gas_values, mode='markers', name='Vsechna data'))
+    fig_original.add_trace(go.Scatter(x=timestamps[window_size - 1:], y=sma_original, mode='lines',
+                                      name=f'Simple Moving Average {window_size}'))
+    fig_original.update_layout(title='Vsechna rozpoznana data',
+                               xaxis_title='Stredoevropsky cas',
+                               yaxis_title='Spotreba plynu [m3]',
+                                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
 
-    if result.returncode == 0:
-        return HttpResponse('Script executed successfully.<br>Output:<br>' + result.stdout)
-    else:
-        return HttpResponse('Error executing script.<br>Error:<br>' + result.stderr)
+    # Filtered Data Plot
+    fig_filtered = go.Figure()
+    fig_filtered.add_trace(go.Scatter(x=filtered_timestamps, y=filtered_values, mode='markers', name='Osetrena data'))
+    fig_filtered.add_trace(go.Scatter(x=filtered_timestamps[window_size - 1:], y=sma_filtered, mode='lines',
+                                      name=f'Simple Moving Average {window_size}'))
+    fig_filtered.update_layout(
+        title='Data orezena o 10% extremnich hodnot',
+        xaxis_title='Stredoevropsky cas',
+        yaxis_title='Spotreba plynu [m3]',
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
 
+    # Convert the plots to HTML
+    plot_html_original = fig_original.to_html(full_html=False)
+    plot_html_filtered = fig_filtered.to_html(full_html=False)
 
-def process_image(request):
-    """ Process image - CROP, EXTRACT TEXT, SAVE TO DB """
-
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    script_path = os.path.join(base_dir, 'scripts', 'process_images.py')
-
-    result = subprocess.run(['python', script_path], capture_output=True, text=True)
-
-    if result.returncode == 0:
-        return HttpResponse('Script PROCESS_IMAGE executed successfully.<br>Output:<br>' + result.stdout)
-    else:
-        return HttpResponse('Error PROCESS_IMAGE executing script.<br>Error:<br>' + result.stderr)
+    return plot_html_original, plot_html_filtered
