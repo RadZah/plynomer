@@ -3,18 +3,24 @@
 {% block content %}
 
     <div class="row">
-        <div style="display: inline-block; float: left">
-            <h1>Plynoměr - vývoj spotřeby plynu</h1>
+        <!-- Left block for image -->
+        <div class="col-md-6 d-flex align-items-center">
 
-            Naposledy na měřícím přístroji
-            {#  Last Screenshot    #}
-            <img src="{{ last_read_image }}" alt="Last read image">
+            <div class="d-flex align-items-center mt-2">
+                <p class="text-white mb-0 mr-3">Last recognised image</p>
+                <img src="{{ last_read_image }}" alt="Last read image" class="img-fluid">
+                {# If you have another image or element you want next to the paragraph, place it here #}
+            </div>
+        </div>
+
+        <!-- Right block for header and text -->
+        <div class="col-md-6">
+            <h1 class="text-white">GasMeter - consumption overview</h1>
+
         </div>
     </div>
 
-{#    <div class="row">#}
-        {#    PLOTLY interactiva graph#}
-        {{ plotly | safe }}
-{#    </div>#}
+    {{ plotly | safe }}
+
 
 {% endblock content %}
